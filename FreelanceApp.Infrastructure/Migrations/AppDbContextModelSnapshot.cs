@@ -22,7 +22,7 @@ namespace FreelanceApp.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Freelancer.Domain.Entities.User", b =>
+            modelBuilder.Entity("FreelanceApp.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
@@ -43,9 +43,8 @@ namespace FreelanceApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("isCnicVerified")
                         .HasColumnType("boolean");

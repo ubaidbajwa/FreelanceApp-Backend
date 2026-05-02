@@ -1,4 +1,4 @@
-﻿using Freelancer.Domain.Entities;
+﻿using FreelanceApp.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Freelancer.Infrastructure.Presistence;
