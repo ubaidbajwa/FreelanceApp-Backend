@@ -24,7 +24,7 @@ namespace FreelanceApp.Infrastructure.Migrations
 
             modelBuilder.Entity("FreelanceApp.Domain.Entities.User", b =>
                 {
-                    b.Property<Guid>("ID")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
@@ -39,6 +39,9 @@ namespace FreelanceApp.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsCnicVerified")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -46,10 +49,7 @@ namespace FreelanceApp.Infrastructure.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("isCnicVerified")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("ID");
+                    b.HasKey("Id");
 
                     b.ToTable("Users");
                 });
