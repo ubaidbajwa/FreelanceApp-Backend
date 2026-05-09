@@ -10,7 +10,6 @@ using FreelanceApp.Infrastructure.Services;
 using FreelanceApp.Application.Features.Auth.Services;
 using FreelanceApp.Api.ExceptionHandlers;
 using FreelanceApp.Application.Common.Settings;
-using FreelanceApp.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;

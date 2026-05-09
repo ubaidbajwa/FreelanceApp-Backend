@@ -15,4 +15,9 @@ public class BCryptPasswordHasher : IPasswordHasher
     {
         return BCrypt.Net.BCrypt.Verify(plainPassword, hashedPassword);
     }
+
+    public bool NeedsRehash(string hashedPassword)
+    {
+        return BCrypt.Net.BCrypt.PasswordNeedsRehash(hashedPassword, WorkFactor);
+    }
 }
