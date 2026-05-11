@@ -13,6 +13,7 @@ using FreelanceApp.Application.Common.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using FreelanceApp.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,8 +52,9 @@ var jwtSettings = builder.Configuration
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer(options => 
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -67,7 +69,29 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+// HttpContext access (required for CurrentUserService)
+builder.Services.AddHttpContextAccessor();
+
+// Current user service (Clean Architecture pattern)
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Authorization with custom policies
+builder.Services.AddAuthorization(options =>
+{
+    // Pakistan-focused KYC policy
+    options.AddPolicy("CnicVerified", policy =>
+        policy.RequireClaim("cnic_verified", "true"));
+
+    // Future policies (placeholders for next phases)
+    options.AddPolicy("FreelancerOnly", policy =>
+        policy.RequireClaim("role", "Freelancer"));
+
+    options.AddPolicy("ClientOnly", policy =>
+        policy.RequireClaim("role", "Client"));
+
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim("role", "Admin"));
+});
 
 // FluentValidation registration
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
