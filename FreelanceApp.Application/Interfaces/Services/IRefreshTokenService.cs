@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace FreelanceApp.Application.Interfaces.Services;
 
-namespace FreelanceApp.Application.Interfaces.Services
+public interface IRefreshTokenService
 {
-    internal class IRefreshTokenService
-    {
-    }
+    Task<string> GenerateAsync(Guid userId);
+    Task<Guid?> ValidateAndConsumeAsync(string refreshToken);
+    Task RevokeAsync(string refreshToken);
 }

@@ -13,6 +13,7 @@ public class AuthService(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
     IJwtTokenService jwtTokenService,
+    IRefreshTokenService refreshTokenService,
     IOptions<JwtSettings> jwtOptions,
     ILogger<AuthService> logger) : IAuthService
 {
@@ -46,7 +47,7 @@ public class AuthService(
 
         logger.LogInformation("User registered successfully: {UserId}", user.Id);
 
-        return BuildAuthResponse(user);
+        return await BuildAuthResponseAsync(user);   // ← async + await
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto dto)
@@ -73,17 +74,19 @@ public class AuthService(
 
         logger.LogInformation("Login successful: {UserId}", user.Id);
 
-        return BuildAuthResponse(user);
+        return await BuildAuthResponseAsync(user);   // ← async + await
     }
 
-    private AuthResponseDto BuildAuthResponse(User user)
+    private async Task<AuthResponseDto> BuildAuthResponseAsync(User user)
     {
-        var token = jwtTokenService.GenerateAccessToken(user);
+        var accessToken = jwtTokenService.GenerateAccessToken(user);
+        var refreshToken = await refreshTokenService.GenerateAsync(user.Id);
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpiryMinutes);
 
         return new AuthResponseDto
         {
-            AccessToken = token,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             TokenType = "Bearer",
             ExpiresAt = expiresAt,
             User = new UserResponseDto
@@ -97,4 +100,35 @@ public class AuthService(
             }
         };
     }
+    public async Task<AuthResponseDto> RefreshAsync(RefreshTokenRequestDto dto)
+    {
+        logger.LogInformation("Token refresh attempt");
+
+        // Validate + consume old refresh token (single-use)
+        var userId = await refreshTokenService.ValidateAndConsumeAsync(dto.RefreshToken);
+
+        if (userId == null)
+        {
+            throw new UnauthorizedException("Invalid or expired refresh token");
+        }
+
+        // Fetch user
+        var user = await userRepository.GetByIdAsync(userId.Value);
+        if (user == null)
+        {
+            throw new UnauthorizedException("User not found");
+        }
+
+        logger.LogInformation("Token refreshed successfully for user: {UserId}", user.Id);
+
+        // Generate NEW pair (rotation)
+        return await BuildAuthResponseAsync(user);
+    }
+
+    public async Task LogoutAsync(LogoutRequestDto dto)
+    {
+        await refreshTokenService.RevokeAsync(dto.RefreshToken);
+        logger.LogInformation("User logged out");
+    }
+
 }

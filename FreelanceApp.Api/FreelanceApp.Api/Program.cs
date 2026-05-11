@@ -1,3 +1,4 @@
+using StackExchange.Redis;
 using FreelanceApp.Application.Interfaces.Repositories;
 using FreelanceApp.Infrastructure.Repositories;
 using Freelancer.Infrastructure.Presistence;
@@ -26,6 +27,16 @@ builder.Services.AddSwaggerGen();
 // Database connection setup
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Redis connection (singleton — manages internal connection pool)
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("Redis")!;
+    return ConnectionMultiplexer.Connect(connectionString);
+});
+
+// Refresh token service
+builder.Services.AddScoped<IRefreshTokenService, RedisRefreshTokenService>();
 
 // Repository registrations
 builder.Services.AddScoped<IUserRepository, UserRepository>();

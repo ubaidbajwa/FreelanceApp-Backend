@@ -1,12 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using FreelanceApp.Application.Common.Settings;
+using FreelanceApp.Application.Interfaces.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using StackExchange.Redis;
+using System.Security.Cryptography;
 
-namespace FreelanceApp.Infrastructure.Services
+namespace FreelanceApp.Infrastructure.Services;
+
+public class RedisRefreshTokenService(
+    IConnectionMultiplexer redis,
+    IOptions<JwtSettings> jwtOptions,
+    ILogger<RedisRefreshTokenService> logger) : IRefreshTokenService
 {
-    internal class RedisRefreshTokenService
+    private readonly JwtSettings _settings = jwtOptions.Value;
+    private IDatabase Db => redis.GetDatabase();
+
+    private const string KeyPrefix = "refresh_token:";
+
+    public async Task<string> GenerateAsync(Guid userId)
     {
+        // Cryptographically secure random token
+        var tokenBytes = RandomNumberGenerator.GetBytes(64);
+        var token = Convert.ToBase64String(tokenBytes);
+
+        // Redis mein store: key = token, value = userId, TTL = 7 days
+        var key = KeyPrefix + token;
+        var expiry = TimeSpan.FromDays(_settings.RefreshTokenExpiryDays);
+
+        await Db.StringSetAsync(key, userId.ToString(), expiry);
+
+        logger.LogInformation("Refresh token generated for user: {UserId}", userId);
+
+        return token;
+    }
+
+    public async Task<Guid?> ValidateAndConsumeAsync(string refreshToken)
+    {
+        var key = KeyPrefix + refreshToken;
+
+        // Atomic: get + delete in one operation (Lua script ya transaction)
+        var userIdValue = await Db.StringGetDeleteAsync(key);
+
+        if (userIdValue.IsNullOrEmpty)
+        {
+            logger.LogWarning("Invalid or expired refresh token used");
+            return null;
+        }
+
+        if (!Guid.TryParse(userIdValue.ToString(), out var userId))
+        {
+            logger.LogError("Corrupt refresh token data in Redis");
+            return null;
+        }
+
+        logger.LogInformation("Refresh token validated and consumed for user: {UserId}", userId);
+
+        return userId;
+    }
+
+    public async Task RevokeAsync(string refreshToken)
+    {
+        var key = KeyPrefix + refreshToken;
+        await Db.KeyDeleteAsync(key);
+
+        logger.LogInformation("Refresh token revoked");
     }
 }
