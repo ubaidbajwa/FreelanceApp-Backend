@@ -27,7 +27,7 @@ public class RegisterRequestValidator : AbstractValidator<RegisterRequestDto>
             .MaximumLength(100).WithMessage("Full name is too long");
 
         RuleFor(x => x.Role)
-            .Must(role => role == UserRole.Freelancer || role == UserRole.Client)
-            .WithMessage("Role must be either Freelancer or Client");
+            .Must(role => role == UserRole.FreelancerApp || role == UserRole.Client)
+            .WithMessage("Role must be either FreelancerApp or Client");
     }
 }

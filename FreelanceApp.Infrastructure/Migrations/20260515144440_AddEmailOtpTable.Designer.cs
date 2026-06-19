@@ -3,6 +3,7 @@ using System;
 using FreelanceApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FreelanceApp.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260515144440_AddEmailOtpTable")]
+    partial class AddEmailOtpTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,72 +69,6 @@ namespace FreelanceApp.Infrastructure.Migrations
                     b.ToTable("EmailOtps", (string)null);
                 });
 
-            modelBuilder.Entity("FreelanceApp.Domain.Entities.IdentityVerification", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("AttemptCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<string>("BackImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DocumentType")
-                        .HasColumnType("integer");
-
-                    b.Property<DateOnly?>("ExtractedDateOfBirth")
-                        .HasColumnType("date");
-
-                    b.Property<string>("ExtractedDocumentNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("ExtractedFullName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<double?>("FaceMatchScore")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("FrontImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("RejectionReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("SelfieImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("VerifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_IdentityVerifications_UserId");
-
-                    b.ToTable("IdentityVerifications", (string)null);
-                });
-
             modelBuilder.Entity("FreelanceApp.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -170,9 +107,6 @@ namespace FreelanceApp.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("SecurityStamp")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -183,17 +117,6 @@ namespace FreelanceApp.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("FreelanceApp.Domain.Entities.EmailOtp", b =>
-                {
-                    b.HasOne("FreelanceApp.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FreelanceApp.Domain.Entities.IdentityVerification", b =>
                 {
                     b.HasOne("FreelanceApp.Domain.Entities.User", "User")
                         .WithMany()

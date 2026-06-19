@@ -14,7 +14,6 @@ public class RedisRefreshTokenService(
 {
     private readonly JwtSettings _settings = jwtOptions.Value;
     private IDatabase Db => redis.GetDatabase();
-
     private const string KeyPrefix = "refresh_token:";
 
     public async Task<string> GenerateAsync(Guid userId)
@@ -30,7 +29,6 @@ public class RedisRefreshTokenService(
         await Db.StringSetAsync(key, userId.ToString(), expiry);
 
         logger.LogInformation("Refresh token generated for user: {UserId}", userId);
-
         return token;
     }
 
@@ -38,7 +36,7 @@ public class RedisRefreshTokenService(
     {
         var key = KeyPrefix + refreshToken;
 
-        // Atomic: get + delete in one operation (Lua script ya transaction)
+        // Atomic: get + delete in one operation
         var userIdValue = await Db.StringGetDeleteAsync(key);
 
         if (userIdValue.IsNullOrEmpty)
@@ -54,7 +52,6 @@ public class RedisRefreshTokenService(
         }
 
         logger.LogInformation("Refresh token validated and consumed for user: {UserId}", userId);
-
         return userId;
     }
 
@@ -62,7 +59,22 @@ public class RedisRefreshTokenService(
     {
         var key = KeyPrefix + refreshToken;
         await Db.KeyDeleteAsync(key);
-
         logger.LogInformation("Refresh token revoked");
+    }
+
+    public Task RevokeAllForUserAsync(Guid userId)
+    {
+        // Token Versioning approach:
+        // Refresh tokens automatically become useless after password reset
+        // because the access token's SecurityStamp won't match the user's new stamp.
+        // The middleware (JWT OnTokenValidated event) handles invalidation.
+        //
+        // Refresh tokens themselves expire naturally after 7 days (their TTL in Redis).
+        // No explicit per-user revocation needed — SecurityStamp does the work.
+
+        logger.LogInformation(
+            "RevokeAllForUserAsync called for user: {UserId} | Token Versioning handles invalidation via SecurityStamp",
+            userId);
+        return Task.CompletedTask;
     }
 }

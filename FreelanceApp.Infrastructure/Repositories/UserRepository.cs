@@ -1,6 +1,6 @@
 ﻿using FreelanceApp.Application.Interfaces.Repositories;
 using FreelanceApp.Domain.Entities;
-using Freelancer.Infrastructure.Presistence;
+using FreelanceApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace FreelanceApp.Infrastructure.Repositories;
@@ -39,5 +39,15 @@ public class UserRepository : IUserRepository
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<Guid?> GetSecurityStampAsync(Guid userId)
+    {
+        var stamp = await _context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => (Guid?)u.SecurityStamp)
+            .FirstOrDefaultAsync();
+
+        return stamp;
     }
 }

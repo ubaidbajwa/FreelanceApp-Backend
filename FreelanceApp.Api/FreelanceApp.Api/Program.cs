@@ -1,9 +1,11 @@
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
 using FreelanceApp.Application.Interfaces.Repositories;
 using FreelanceApp.Infrastructure.Repositories;
-using Freelancer.Infrastructure.Presistence;
+using FreelanceApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using FluentValidation;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using FluentValidation.AspNetCore;
 using FreelanceApp.Application.Features.Auth.Validators;
 using FreelanceApp.Application.Interfaces.Services;
@@ -11,10 +13,10 @@ using FreelanceApp.Infrastructure.Services;
 using FreelanceApp.Application.Features.Auth.Services;
 using FreelanceApp.Api.ExceptionHandlers;
 using FreelanceApp.Application.Common.Settings;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using FreelanceApp.Api.Services;
+using FreelanceApp.Application.Features.Kyc.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Redis connection (singleton � manages internal connection pool)
+// Redis connection (singleton — manages internal connection pool)
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var connectionString = builder.Configuration.GetConnectionString("Redis")!;
@@ -41,6 +43,8 @@ builder.Services.AddScoped<IRefreshTokenService, RedisRefreshTokenService>();
 // Repository registrations
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+builder.Services.AddScoped<IEmailOtpRepository, EmailOtpRepository>();
+
 
 // AuthService registration
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -49,6 +53,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Disable automatic claim mapping (preserve "sub" as-is)
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 // JWT Settings binding
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection(JwtSettings.SectionName));
@@ -56,16 +63,36 @@ builder.Services.Configure<JwtSettings>(
 // JWT Token Service
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+// Email Settings binding (Mailtrap)
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection(EmailSettings.SectionName));
+
+// Email Service
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+// OTP Service
+builder.Services.AddScoped<IOtpService, OtpService>();
+
+// Cloudinary Settings binding
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection(CloudinarySettings.SectionName));
+
+// Image Storage Service
+builder.Services.AddScoped<IImageStorageService, CloudinaryImageService>();
+
+builder.Services.AddScoped<IKycRepository, KycRepository>();
+builder.Services.AddScoped<IKycService, KycService>();
+
 // JWT Authentication
 var jwtSettings = builder.Configuration
     .GetSection(JwtSettings.SectionName)
     .Get<JwtSettings>()!;
 
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options => 
+
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -75,9 +102,53 @@ builder.Services
             ValidIssuer = jwtSettings.Issuer,
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-            ClockSkew = TimeSpan.Zero
+                Encoding.UTF8.GetBytes(jwtSettings.Secret))
         };
+
+        // ⬇️ NAYA — SecurityStamp validation
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                // Get the SecurityStamp claim from token
+                var tokenStamp = context.Principal?.FindFirst("security_stamp")?.Value;
+                var userIdClaim = context.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+                if (string.IsNullOrEmpty(tokenStamp) || string.IsNullOrEmpty(userIdClaim))
+                {
+                    context.Fail("Missing required claims");
+                    return;
+                }
+
+                if (!Guid.TryParse(userIdClaim, out var userId) ||
+                    !Guid.TryParse(tokenStamp, out var tokenStampGuid))
+                {
+                    context.Fail("Invalid claim format");
+                    return;
+                }
+
+                // Get current SecurityStamp from database
+                var userRepo = context.HttpContext.RequestServices
+                    .GetRequiredService<IUserRepository>();
+
+                var currentStamp = await userRepo.GetSecurityStampAsync(userId);
+
+                if (currentStamp == null)
+                {
+                    context.Fail("User no longer exists");
+                    return;
+                }
+
+                if (currentStamp != tokenStampGuid)
+                {
+                    context.Fail("Session revoked. Please login again.");
+                    return;
+                }
+
+                // ✅ Stamp matches — request continues
+            }
+        };
+        // ⬆️ NAYA END
     });
 
 // HttpContext access (required for CurrentUserService)
@@ -89,13 +160,13 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // Authorization with custom policies
 builder.Services.AddAuthorization(options =>
 {
-    // Pakistan-focused KYC policy
-    options.AddPolicy("CnicVerified", policy =>
-        policy.RequireClaim("cnic_verified", "true"));
+    // global-focused KYC policy
+    options.AddPolicy("IdentityVerified", policy =>
+    policy.RequireClaim("identity_verified", "true"));
 
     // Future policies (placeholders for next phases)
     options.AddPolicy("FreelancerOnly", policy =>
-        policy.RequireClaim("role", "Freelancer"));
+        policy.RequireClaim("role", "FreelancerApp"));
 
     options.AddPolicy("ClientOnly", policy =>
         policy.RequireClaim("role", "Client"));
@@ -111,7 +182,7 @@ builder.Services.AddFluentValidationAutoValidation();
 // Service registrations
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
-// CORS setup � Flutter aur web panel ke liye
+// CORS setup — Flutter aur web panel ke liye
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -134,12 +205,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseAuthentication();
-
 app.UseHttpsRedirection();
 
+// 1. Pehle Routing aayegi
+app.UseRouting();
+
+// 2. Phir CORS aayega
 app.UseCors("AllowFrontend");
 
+// 3. Phir Authentication aayegi
+app.UseAuthentication();
+
+// 4. Phir Authorization aayegi
 app.UseAuthorization();
 
 app.MapControllers();

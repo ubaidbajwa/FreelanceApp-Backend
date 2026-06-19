@@ -26,6 +26,8 @@ public class JwtTokenService(IOptions<JwtSettings> jwtOptions) : IJwtTokenServic
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64),
 
+             new Claim("security_stamp", user.SecurityStamp.ToString()), 
+
             // Custom claims (humare app ke liye unique)
             new("role", user.Role.ToString()),
             new("full_name", user.FullName),

@@ -22,13 +22,13 @@ public class UserController(ICurrentUserService currentUser) : ControllerBase
         });
     }
 
-    [HttpGet("me/freelancer-area")]
-    [Authorize(Policy = "FreelancerOnly")]
-    public IActionResult FreelancerArea()
+    [HttpGet("me/FreelancerApp-area")]
+    [Authorize(Policy = "FreelancerAppOnly")]
+    public IActionResult FreelancerAppArea()
     {
         return Ok(new
         {
-            message = "Welcome Freelancer! Yeh area sirf freelancers ke liye hai.",
+            message = "Welcome FreelancerApp! Yeh area sirf FreelancerApps ke liye hai.",
             yourId = currentUser.UserId
         });
     }

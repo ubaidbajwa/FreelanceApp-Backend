@@ -72,6 +72,7 @@ public class GlobalExceptionHandler(
         404 => "Not Found",
         409 => "Conflict",
         422 => "Unprocessable Entity",
+        429 => "Too Many Requests",
         _ => "Error"
     };
 }
