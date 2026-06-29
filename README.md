@@ -1,36 +1,59 @@
-﻿# ProLance — AI-Powered Freelance Ecosystem
+# FreelanceApp — Backend
 
-A robust, enterprise-grade freelance marketplace backend built with **ASP.NET Core 8.0** following **Clean Architecture** principles. This project is the core engine for a multi-platform system involving a Flutter mobile app and an Angular web dashboard.
+Production-grade freelance marketplace backend built with **ASP.NET Core 8**.
 
-## 🚀 Vision & Tech Stack
-This project is designed as a scalable, high-performance solution for the modern freelance economy.
+## 🚀 Features Implemented
 
-- **Backend:** ASP.NET Core 8.0 Web API (C#)
-- **Architecture:** Clean Architecture (Separation of Concerns)
-- **Database:** PostgreSQL (Hosted on Neon Cloud)
-- **ORM:** Entity Framework Core 8.0
-- **Frontend Ecosystem:** 
-  - 📱 **Mobile:** Flutter (Cross-platform)
-  - 💻 **Admin:** Angular 17+ (Professional Dashboard)
-- **Security:** Role-Based Access Control (RBAC) & JWT Authentication
+### Authentication System
+- JWT-based authentication with Redis refresh tokens
+- Email verification with OTP (CSPRNG-based)
+- Password reset with **Token Versioning** for multi-device session revocation
+- Rate limiting, email enumeration protection
+- Custom JWT validation middleware
 
-## 🏗 Project Structure (Clean Architecture)
-- **Domain:** Core Entities, Enums (UserRoles), and Business Logic.
-- **Application:** Service Interfaces, DTOs, and Business Use-cases.
-- **Infrastructure:** Database Persistence (EF Core), Migrations, and External Services.
-- **API:** RESTful Controllers, Middleware (CORS), and Swagger Documentation.
+### KYC Verification (AI-Powered)
+- CNIC/Passport document upload (Cloudinary)
+- OCR using **Google Cloud Vision API**
+- Face matching using **AWS Rekognition** (70% threshold)
+- Automatic verification flow
 
-## ⚡ Key Technical Features
-- [x] **PostgreSQL Integration:** Fully relational database with optimized indexing.
-- [x] **Enum-Driven Roles:** Fixed-integer roles (Freelancer, Client, Admin) for data integrity.
-- [x] **Global CORS Policy:** Configured to support Angular and Flutter origins.
-- [ ] **JWT Auth:** Secure token-based authentication (In Progress).
-- [ ] **AI Job Matching:** Integrating AI for smarter job discovery (Planned).
+## 🏗️ Architecture
 
-## 👨‍💻 Developer Profile
-**Ubaid Bajwa**  
-*Software Engineering Student @ University of Gujrat*  
-Full-Stack Developer specializing in .NET, Angular, and Flutter.
+Clean Architecture with 4 layers:
+- **Domain** — Entities, enums (no dependencies)
+- **Application** — Business logic, interfaces, DTOs
+- **Infrastructure** — EF Core, external services
+- **API** — Controllers, middleware
+
+## 🛠️ Tech Stack
+
+- ASP.NET Core 8
+- EF Core 8 + PostgreSQL (Neon)
+- Redis (Upstash) for sessions
+- JWT + BCrypt
+- Cloudinary, Google Cloud Vision, AWS Rekognition
+- MailKit (email)
+
+## 📋 Status
+
+🚧 **Under active development**
+
+✅ Authentication system  
+✅ KYC verification  
+⏳ Job posting & bidding  
+⏳ Payment & escrow  
+⏳ Real-time chat  
+
+## 🔒 Security Patterns
+
+- Defense in depth (multi-layer security)
+- Idempotent operations
+- Silent failure for enumeration protection
+- Token versioning for instant session revocation
+- BCrypt password hashing
+- HTTPS only
 
 ---
-*This project is part of a Final Year Project (FYP) focused on creating a seamless freelance experience.*
+
+**Author:** Ubaid Bajwa  
+**Status:** Learning project — actively developed
