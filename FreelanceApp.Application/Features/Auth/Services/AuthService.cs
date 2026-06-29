@@ -41,7 +41,7 @@ public class AuthService(
             PasswordHash = passwordHasher.HashPassword(dto.Password),
             FullName = dto.FullName.Trim(),
             Role = dto.Role,
-            IsCnicVerified = false,
+            IsIdentityVerified = false,
             SecurityStamp = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow
         };
@@ -109,7 +109,7 @@ public class AuthService(
                 Email = user.Email,
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
-                IsCnicVerified = user.IsCnicVerified,
+                IsIdentityVerified = user.IsIdentityVerified,
                 CreatedAt = user.CreatedAt
             }
         };

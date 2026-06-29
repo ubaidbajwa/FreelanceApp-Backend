@@ -8,4 +8,6 @@ public interface IKycService
         Guid userId,
         KycUploadRequest request,
         CancellationToken ct = default);
+
+    Task<KycStatusResponseDto> GetStatusAsync(Guid userId);
 }

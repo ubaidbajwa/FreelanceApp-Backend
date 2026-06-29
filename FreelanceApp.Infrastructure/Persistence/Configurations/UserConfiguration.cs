@@ -40,7 +40,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(20);
 
         // Verification flags — default false for new users
-        builder.Property(u => u.IsCnicVerified).HasDefaultValue(false);
+        builder.Property(u => u.IsIdentityVerified).HasDefaultValue(false);
         builder.Property(u => u.IsEmailVerified).HasDefaultValue(false);
 
         // SecurityStamp — for instant session revocation

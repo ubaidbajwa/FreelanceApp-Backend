@@ -77,6 +77,18 @@ builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection(CloudinarySettings.SectionName));
 
+builder.Services.Configure<GoogleVisionSettings>(
+    builder.Configuration.GetSection(GoogleVisionSettings.SectionName));
+
+builder.Services.AddSingleton<IOcrService, GoogleVisionOcrService>();
+
+// AWS Rekognition Settings binding
+builder.Services.Configure<AwsRekognitionSettings>(
+    builder.Configuration.GetSection(AwsRekognitionSettings.SectionName));
+
+builder.Services.AddSingleton<IFaceMatchService, AwsRekognitionFaceMatchService>();  
+
+
 // Image Storage Service
 builder.Services.AddScoped<IImageStorageService, CloudinaryImageService>();
 
@@ -88,7 +100,11 @@ var jwtSettings = builder.Configuration
     .GetSection(JwtSettings.SectionName)
     .Get<JwtSettings>()!;
 
-
+// Fail fast if the signing key isn't configured (e.g. empty in appsettings.json
+// and no user-secrets/env override). An empty key makes every token invalid.
+if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
+    throw new InvalidOperationException(
+        "JwtSettings:Secret is not configured. Set it via user-secrets or environment variables.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -160,13 +176,13 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 // Authorization with custom policies
 builder.Services.AddAuthorization(options =>
 {
-    // global-focused KYC policy
+    // global identity-verification policy — claim name must match the one issued in JwtTokenService ("identity_verified")
     options.AddPolicy("IdentityVerified", policy =>
     policy.RequireClaim("identity_verified", "true"));
 
     // Future policies (placeholders for next phases)
     options.AddPolicy("FreelancerOnly", policy =>
-        policy.RequireClaim("role", "FreelancerApp"));
+        policy.RequireClaim("role", "Freelancer"));
 
     options.AddPolicy("ClientOnly", policy =>
         policy.RequireClaim("role", "Client"));

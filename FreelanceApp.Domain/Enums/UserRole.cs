@@ -2,7 +2,7 @@
 
 public enum UserRole
 {
-    FreelancerApp = 0,
+    Freelancer = 0,
     Client = 1,
     Admin = 2
 }

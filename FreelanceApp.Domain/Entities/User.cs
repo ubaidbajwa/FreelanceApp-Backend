@@ -8,8 +8,8 @@ public class User
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public UserRole Role { get; set; } = UserRole.FreelancerApp;
-    public bool IsCnicVerified { get; set; } = false;
+    public UserRole Role { get; set; } = UserRole.Freelancer;
+    public bool IsIdentityVerified { get; set; } = false;
     public bool IsEmailVerified { get; set; }
     public Guid SecurityStamp { get; set; }
 

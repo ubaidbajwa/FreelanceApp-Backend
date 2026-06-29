@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\FreelanceApp.Infrastructure\FreelanceApp.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Secrets\" />
+  </ItemGroup>
+
 </Project>

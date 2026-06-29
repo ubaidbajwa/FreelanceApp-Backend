@@ -6,6 +6,6 @@ public class UserResponseDto
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
-    public bool IsCnicVerified { get; set; }
+    public bool IsIdentityVerified { get; set; }
     public DateTime CreatedAt { get; set; }
 }

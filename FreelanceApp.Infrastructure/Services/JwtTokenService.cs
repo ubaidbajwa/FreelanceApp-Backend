@@ -31,7 +31,7 @@ public class JwtTokenService(IOptions<JwtSettings> jwtOptions) : IJwtTokenServic
             // Custom claims (humare app ke liye unique)
             new("role", user.Role.ToString()),
             new("full_name", user.FullName),
-            new("cnic_verified", user.IsCnicVerified.ToString().ToLower())
+            new("identity_verified", user.IsIdentityVerified.ToString().ToLower())
         };
 
         // Step 2: Signing key prepare karo

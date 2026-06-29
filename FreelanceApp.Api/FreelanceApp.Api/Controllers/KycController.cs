@@ -55,4 +55,20 @@ public class KycController(IKycService kycService) : ControllerBase
             message = "KYC documents uploaded successfully. Verification under review."
         });
     }
+
+    // ==========================================
+    // NEW STATUS ENDPOINT ADDED HERE
+    // ==========================================
+    [HttpGet("status")]
+    public async Task<IActionResult> GetStatus()
+    {
+        var userIdClaim = User.FindFirst("sub")?.Value
+                       ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { message = "Invalid user token" });
+
+        var status = await kycService.GetStatusAsync(userId);
+        return Ok(status);
+    }
 }

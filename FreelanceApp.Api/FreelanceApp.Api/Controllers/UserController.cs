@@ -17,30 +17,30 @@ public class UserController(ICurrentUserService currentUser) : ControllerBase
             userId = currentUser.UserId,
             email = currentUser.Email,
             role = currentUser.Role,
-            isCnicVerified = currentUser.IsCnicVerified,
+            isIdentityVerified = currentUser.IsIdentityVerified,
             isAuthenticated = currentUser.IsAuthenticated
         });
     }
 
-    [HttpGet("me/FreelancerApp-area")]
-    [Authorize(Policy = "FreelancerAppOnly")]
-    public IActionResult FreelancerAppArea()
+    [HttpGet("me/freelancer-area")]
+    [Authorize(Policy = "FreelancerOnly")]
+    public IActionResult FreelancerArea()
     {
         return Ok(new
         {
-            message = "Welcome FreelancerApp! Yeh area sirf FreelancerApps ke liye hai.",
+            message = "Welcome Freelancer! Yeh area sirf Freelancers ke liye hai.",
             yourId = currentUser.UserId
         });
     }
 
     [HttpGet("me/withdraw-eligibility")]
-    [Authorize(Policy = "CnicVerified")]
+    [Authorize(Policy = "IdentityVerified")]
     public IActionResult WithdrawEligibility()
     {
         return Ok(new
         {
             eligible = true,
-            message = "CNIC verified! Aap withdrawal kar sakte hain."
+            message = "Identity verified! Aap withdrawal kar sakte hain."
         });
     }
 }

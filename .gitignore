@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# =========================
+# Custom / Security Additions
+# =========================
+
+# Secrets — NEVER commit
+Secrets/
+*.json.key
+google-vision-key.json

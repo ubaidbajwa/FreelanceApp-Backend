@@ -25,11 +25,11 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor)
     public string? Role =>
         User?.FindFirstValue("role");
 
-    public bool IsCnicVerified
+    public bool IsIdentityVerified
     {
         get
         {
-            var claim = User?.FindFirstValue("cnic_verified");
+            var claim = User?.FindFirstValue("identity_verified");
             return bool.TryParse(claim, out var verified) && verified;
         }
     }
